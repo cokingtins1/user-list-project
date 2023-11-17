@@ -1,35 +1,51 @@
-import { useState } from 'react'
-import reactLogo from './assets/react.svg'
-import viteLogo from '/vite.svg'
-import './App.css'
+import { Users } from "./Users"
+import { useEffect, useState } from "react"
 
 function App() {
-  const [count, setCount] = useState(0)
+	const [users, setUsers] = useState([])
+	const [error, setError] = useState()
+	const [loading, setLoading] = useState(true)
 
-  return (
-    <>
-      <div>
-        <a href="https://vitejs.dev" target="_blank">
-          <img src={viteLogo} className="logo" alt="Vite logo" />
-        </a>
-        <a href="https://react.dev" target="_blank">
-          <img src={reactLogo} className="logo react" alt="React logo" />
-        </a>
-      </div>
-      <h1>Vite + React</h1>
-      <div className="card">
-        <button onClick={() => setCount((count) => count + 1)}>
-          count is {count}
-        </button>
-        <p>
-          Edit <code>src/App.jsx</code> and save to test HMR
-        </p>
-      </div>
-      <p className="read-the-docs">
-        Click on the Vite and React logos to learn more
-      </p>
-    </>
-  )
+	useEffect(() => {
+		setLoading(true)
+		setError(undefined)
+		setUsers([])
+		const controller = new AbortController()
+		fetch("https://jsonplaceholder.typicode.com/users", {
+			signal: controller.signal,
+		})
+			.then((res) =>
+				res.status === 200 ? res.json() : Promise.reject(res)
+			)
+			.then((data) => {
+				setUsers(data)
+			})
+			.catch((e) => {
+				if (e?.name === "AbortError") return
+				setError(e)
+			})
+			.finally(() => {
+				setLoading(false)
+			})
+		return () => {
+			controller.abort()
+		}
+	}, [])
+
+	return (
+		<>
+			<h1>Users List</h1>
+			{loading ? (
+				<h2>Loading...</h2>
+			) : (
+				<ul>
+					{users.map((user) => {
+						return <Users key={user.id} name={user.name} />
+					})}
+				</ul>
+			)}
+		</>
+	)
 }
 
 export default App
